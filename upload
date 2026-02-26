@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+# --- CONFIGURATION TOGGLES ---
+DRY_RUN=false        # Set to true to test (will not copy), false to actually upload
+SHUTDOWN_AFTER=false # Set to true to shut down PC when finished
+
+# --- PATHS ---
+# Note: Source is now local, Destination is now remote
+LOCAL_DATA="/home/aritro/Documents/Academia/PhD/StagYY/scripts/festus/upload/"
+REMOTE_SERVER="bt732647@festus.hpc.uni-bayreuth.de:/workdir/bt732647/venus_imp3/"
+SSH_KEY="/home/aritro/.ssh/festus_key"
+
+# Handle Dry Run flag
+DRY_FLAG=""
+if [ "$DRY_RUN" = true ]; then
+    echo "--- DRY RUN MODE ENABLED (No files will be moved) ---"
+    DRY_FLAG="--dry-run"
+fi
+
+echo "Uploading files from PC to Euler..."
+
+# Using -u (update) to only upload files that are newer on your PC than on Euler
+# Using --progress to see the transfer speed/status
+rsync -av $DRY_FLAG --progress \
+  -e "ssh -i $SSH_KEY" \
+  "$LOCAL_DATA" "$REMOTE_SERVER"
+
+echo "Upload process completed."
+
+# --- SHUTDOWN LOGIC ---
+if [ "$SHUTDOWN_AFTER" = true ]; then
+    echo "Shutdown toggle is ON. System will shut down in 60 seconds."
+    sudo shutdown -h +1
+else
+    echo "Shutdown toggle is OFF. System staying on."
+fi
